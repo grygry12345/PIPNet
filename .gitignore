@@ -1,0 +1,5 @@
+data
+snapshots
+*.o
+*.so
+*.pyc
