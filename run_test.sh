@@ -3,7 +3,7 @@
 # 300W, resnet18
 #python lib/test.py experiments/data_300W/pip_32_16_60_r18_l2_l1_10_1_nb10.py test.txt images_test
 # 300W, resnet101
-#python lib/test.py experiments/data_300W/pip_32_16_60_r101_l2_l1_10_1_nb10.py test.txt images_test
+python lib/test.py experiments/data_300W/pip_32_16_60_r101_l2_l1_10_1_nb10.py test.txt images_test
 
 # COFW, resnet18
 #python lib/test.py experiments/COFW/pip_32_16_60_r18_l2_l1_10_1_nb10.py test.txt images_test
