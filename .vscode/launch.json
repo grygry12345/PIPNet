@@ -1,0 +1,104 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "300W preprocess",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/preprocess.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "data_300W"
+            ]
+        },
+        {
+            "name": "300W, resnet18 train",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "experiments/data_300W/pip_32_16_60_r18_l2_l1_10_1_nb10.py"
+            ]
+        },
+        {
+            "name": "300W, resnet18 test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "experiments/data_300W/pip_32_16_60_r18_l2_l1_10_1_nb10.py",
+                "test.txt",
+                "images_test"
+            ]
+        },
+        {
+            "name": "300W, resnet18 demo image",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "lib/demo.py",
+                "experiments/data_300W/pip_32_16_60_r18_l2_l1_10_1_nb10.py",
+                "images/1.jpg"
+            ]
+        },
+        {
+            "name": "300W, MobileNetV3 train",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "experiments/data_300W/pip_32_16_60_mobilenetv3_l2_l1_10_1_nb10.py"
+            ]
+        },
+        {
+            "name": "300W, MobileNetV3 test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "experiments/data_300W/pip_32_16_60_mobilenetv3_l2_l1_10_1_nb10.py",
+                "test.txt",
+                "images_test"
+            ]
+        },
+        {
+            "name": "300W, MobileNetV3 demo image",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/demo.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "experiments/data_300W/pip_32_16_60_mobilenetv3_l2_l1_10_1_nb10.py",
+                "images/1.jpg"
+            ]
+        },
+        {
+            "name": "300W, MobileNetV3 demo video",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/demo_video.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "experiments/data_300W/pip_32_16_60_mobilenetv3_l2_l1_10_1_nb10.py",
+                "videos/002.avi"
+            ]
+        }
+    ]
+}
