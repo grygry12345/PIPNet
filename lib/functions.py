@@ -8,6 +8,8 @@ import random
 import time
 from scipy.integrate import simps
 
+from tensorboardX import SummaryWriter
+
 
 def get_label(data_name, label_file, task_type=None):
     label_path = os.path.join('data', data_name, label_file)
@@ -109,6 +111,8 @@ def compute_loss_pip(outputs_map, outputs_local_x, outputs_local_y, outputs_nb_x
     return loss_map, loss_x, loss_y, loss_nb_x, loss_nb_y
 
 def train_model(det_head, net, train_loader, criterion_cls, criterion_reg, cls_loss_weight, reg_loss_weight, num_nb, optimizer, num_epochs, scheduler, save_dir, save_interval, device):
+    writer = SummaryWriter()
+
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         logging.info('Epoch {}/{}'.format(epoch, num_epochs - 1))
@@ -136,6 +140,15 @@ def train_model(det_head, net, train_loader, criterion_cls, criterion_reg, cls_l
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            
+            # use SummaryWriter to write the loss values to tensorboard
+            writer.add_scalar('loss/total', loss.item(), global_step=(epoch*len(train_loader)+i))
+            writer.add_scalar('loss/map', cls_loss_weight*loss_map.item(), global_step=(epoch*len(train_loader)+i))
+            writer.add_scalar('loss/x', reg_loss_weight*loss_x.item(), global_step=(epoch*len(train_loader)+i))
+            writer.add_scalar('loss/y', reg_loss_weight*loss_y.item(), global_step=(epoch*len(train_loader)+i))
+            writer.add_scalar('loss/nbx', reg_loss_weight*loss_nb_x.item(), global_step=(epoch*len(train_loader)+i))
+            writer.add_scalar('loss/nby', reg_loss_weight*loss_nb_y.item(), global_step=(epoch*len(train_loader)+i))
+            
             if i%10 == 0:
                 if det_head == 'pip':
                     print('[Epoch {:d}/{:d}, Batch {:d}/{:d}] <Total loss: {:.6f}> <map loss: {:.6f}> <x loss: {:.6f}> <y loss: {:.6f}> <nbx loss: {:.6f}> <nby loss: {:.6f}>'.format(
@@ -152,6 +165,9 @@ def train_model(det_head, net, train_loader, criterion_cls, criterion_reg, cls_l
             torch.save(net.state_dict(), filename)
             print(filename, 'saved')
         scheduler.step()
+        
+    writer.close()
+        
     return net
 
 def forward_pip(net, inputs, preprocess, input_size, net_stride, num_nb):
