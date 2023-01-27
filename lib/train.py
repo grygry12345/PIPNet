@@ -16,6 +16,8 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
 
+from torchsummary import summary
+
 from networks import *
 import data_utils
 from functions import * 
@@ -131,6 +133,12 @@ else:
     device = torch.device("cpu")
 net = net.to(device)
 
+# print the summary of the network use torchsummary with loging info to save the summary to log file
+
+print('Network summary:')
+print(summary(net, (3, cfg.input_size, cfg.input_size), batch_size=cfg.batch_size))
+
+
 criterion_cls = None
 if cfg.criterion_cls == 'l2':
     criterion_cls = nn.MSELoss()
@@ -196,5 +204,13 @@ else:
 
 train_loader = torch.utils.data.DataLoader(train_data, batch_size=cfg.batch_size, shuffle=True, num_workers=8, pin_memory=True, drop_last=True)
 
+train_begin = time.time()
+
 train_model(cfg.det_head, net, train_loader, criterion_cls, criterion_reg, cfg.cls_loss_weight, cfg.reg_loss_weight, cfg.num_nb, optimizer, cfg.num_epochs, scheduler, save_dir, cfg.save_interval, device)
 
+train_end = time.time()
+
+# measure training time and save train log
+
+logging.info('Training time: %d min %d sec' % ((train_end-train_begin)//60, (train_end-train_begin)%60))
+print('Training time: %d min %d sec' % ((train_end-train_begin)//60, (train_end-train_begin)%60))
