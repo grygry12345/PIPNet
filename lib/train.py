@@ -16,7 +16,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
 
-from torchsummary import summary
+from torchinfo import summary
 
 from networks import *
 import data_utils
@@ -135,9 +135,14 @@ net = net.to(device)
 
 # print the summary of the network use torchsummary with loging info to save the summary to log file
 
-print('Network summary:')
-print(summary(net, (3, cfg.input_size, cfg.input_size), batch_size=cfg.batch_size))
 
+print('Network summary:')
+summary(net, (cfg.batch_size, 3, cfg.input_size, cfg.input_size))
+
+model_stats = summary(net, (cfg.batch_size, 3, cfg.input_size, cfg.input_size))
+summary_str = str(model_stats)
+
+logging.info(summary_str)
 
 criterion_cls = None
 if cfg.criterion_cls == 'l2':
