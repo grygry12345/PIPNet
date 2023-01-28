@@ -141,14 +141,6 @@ def train_model(det_head, net, train_loader, criterion_cls, criterion_reg, cls_l
             loss.backward()
             optimizer.step()
             
-            # use SummaryWriter to write the loss values to tensorboard
-            writer.add_scalar('loss/total', loss.item(), global_step=(epoch*len(train_loader)+i))
-            writer.add_scalar('loss/map', cls_loss_weight*loss_map.item(), global_step=(epoch*len(train_loader)+i))
-            writer.add_scalar('loss/x', reg_loss_weight*loss_x.item(), global_step=(epoch*len(train_loader)+i))
-            writer.add_scalar('loss/y', reg_loss_weight*loss_y.item(), global_step=(epoch*len(train_loader)+i))
-            writer.add_scalar('loss/nbx', reg_loss_weight*loss_nb_x.item(), global_step=(epoch*len(train_loader)+i))
-            writer.add_scalar('loss/nby', reg_loss_weight*loss_nb_y.item(), global_step=(epoch*len(train_loader)+i))
-            
             if i%10 == 0:
                 if det_head == 'pip':
                     print('[Epoch {:d}/{:d}, Batch {:d}/{:d}] <Total loss: {:.6f}> <map loss: {:.6f}> <x loss: {:.6f}> <y loss: {:.6f}> <nbx loss: {:.6f}> <nby loss: {:.6f}>'.format(
@@ -164,6 +156,15 @@ def train_model(det_head, net, train_loader, criterion_cls, criterion_reg, cls_l
             filename = os.path.join(save_dir, 'epoch%d.pth' % epoch)
             torch.save(net.state_dict(), filename)
             print(filename, 'saved')
+        
+        # use SummaryWriter to write the loss values to tensorboard
+        writer.add_scalar('loss/total', loss.item(), global_step=epoch)
+        writer.add_scalar('loss/map', cls_loss_weight*loss_map.item(), global_step=epoch)
+        writer.add_scalar('loss/x', reg_loss_weight*loss_x.item(), global_step=epoch)
+        writer.add_scalar('loss/y', reg_loss_weight*loss_y.item(), global_step=epoch)
+        writer.add_scalar('loss/nbx', reg_loss_weight*loss_nb_x.item(), global_step=epoch)
+        writer.add_scalar('loss/nby', reg_loss_weight*loss_nb_y.item(), global_step=epoch)
+        
         scheduler.step()
         
     writer.close()
