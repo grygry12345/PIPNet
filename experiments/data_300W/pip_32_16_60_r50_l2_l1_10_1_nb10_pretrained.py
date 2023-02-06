@@ -8,8 +8,8 @@ class Config():
         self.num_epochs = 60
         self.decay_steps = [30, 50]
         self.input_size = 256
-        self.backbone = 'resnet101'
-        self.pretrained = False
+        self.backbone = 'resnet50'
+        self.pretrained = True
         self.criterion_cls = 'l2'
         self.criterion_reg = 'l1'
         self.cls_loss_weight = 10
