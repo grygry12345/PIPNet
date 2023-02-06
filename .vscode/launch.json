@@ -15,6 +15,55 @@
                 "data_300W"
             ]
         },
+
+        {
+            "name": "300W, MobileNetV3 pretrained train ",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "experiments/data_300W/pip_32_16_60_mobilenetv3_l2_l1_10_1_nb10_pretrained.py"
+            ]
+        },
+        {
+            "name": "300W, MobileNetV3 pretrained test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "experiments/data_300W/pip_32_16_60_mobilenetv3_l2_l1_10_1_nb10_pretrained.py",
+                "test.txt",
+                "images_test"
+            ]
+        },
+        {
+            "name": "300W, resnet18 pretrained train",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/train.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "experiments/data_300W/pip_32_16_60_r18_l2_l1_10_1_nb10_pretrained.py"
+            ]
+        },
+        {
+            "name": "300W, resnet18 pretrained test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "experiments/data_300W/pip_32_16_60_r18_l2_l1_10_1_nb10_pretrained.py",
+                "test.txt",
+                "images_test"
+            ]
+        },
         {
             "name": "300W, resnet18 train",
             "type": "python",
