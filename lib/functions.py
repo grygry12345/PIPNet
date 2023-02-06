@@ -111,7 +111,7 @@ def compute_loss_pip(outputs_map, outputs_local_x, outputs_local_y, outputs_nb_x
     return loss_map, loss_x, loss_y, loss_nb_x, loss_nb_y
 
 def train_model(det_head, net, train_loader, criterion_cls, criterion_reg, cls_loss_weight, reg_loss_weight, num_nb, optimizer, num_epochs, scheduler, save_dir, save_interval, device):
-    writer = SummaryWriter()
+    writer = SummaryWriter(save_dir)
 
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
