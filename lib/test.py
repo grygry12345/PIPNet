@@ -47,7 +47,7 @@ log_dir = os.path.join('./logs', cfg.data_name, cfg.experiment_name)
 if not os.path.exists(log_dir):
     os.mkdir(log_dir)
 
-logging.basicConfig(filename=os.path.join(log_dir, 'train.log'), level=logging.INFO)
+logging.basicConfig(filename=os.path.join(log_dir, 'test.log'), level=logging.INFO)
 
 save_dir = os.path.join('./snapshots', cfg.data_name, cfg.experiment_name)
 if not os.path.exists(save_dir):
