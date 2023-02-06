@@ -3,3 +3,4 @@ snapshots
 *.o
 *.so
 *.pyc
+*.log
