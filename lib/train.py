@@ -137,9 +137,9 @@ net = net.to(device)
 
 
 print('Network summary:')
-summary(net, (cfg.batch_size, 3, cfg.input_size, cfg.input_size))
+summary(net, (1, 3, cfg.input_size, cfg.input_size))
 
-model_stats = summary(net, (cfg.batch_size, 3, cfg.input_size, cfg.input_size))
+model_stats = summary(net, (1, 3, cfg.input_size, cfg.input_size))
 summary_str = str(model_stats)
 
 logging.info(summary_str)
