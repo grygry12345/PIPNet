@@ -4,3 +4,4 @@ snapshots
 *.so
 *.pyc
 *.log
+test_images
