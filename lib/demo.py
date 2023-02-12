@@ -19,6 +19,9 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import ImageGrid
+
 from networks import *
 import data_utils
 from functions import *
@@ -31,7 +34,7 @@ if not len(sys.argv) == 3:
 experiment_name = sys.argv[1].split('/')[-1][:-3]
 data_name = sys.argv[1].split('/')[-2]
 config_path = '.experiments.{}.{}'.format(data_name, experiment_name)
-image_file = sys.argv[2]
+image_folder = sys.argv[2]
 
 my_config = importlib.import_module(config_path, package='PIPNet')
 Config = getattr(my_config, 'Config')
@@ -78,56 +81,98 @@ normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
 preprocess = transforms.Compose([transforms.Resize((cfg.input_size, cfg.input_size)), transforms.ToTensor(), normalize])
 
-def demo_image(image_file, net, preprocess, input_size, net_stride, num_nb, use_gpu, device):
+def demo_image(image_folder, net, preprocess, input_size, net_stride, num_nb, use_gpu, device):
     detector = FaceBoxesDetector('FaceBoxes', 'FaceBoxesV2/weights/FaceBoxesV2.pth', use_gpu, device)
     my_thresh = 0.6
     det_box_scale = 1.2
+    
+    # get images from image_folder
+    image_files = [os.path.join(image_folder, f) for f in os.listdir(image_folder) if f.endswith('.jpg') or f.endswith('.png') or f.endswith('.jpeg')]
+    # get count of images
+    image_count = len(image_files)        
+    
+    images_out = []
+    for image_file in image_files:
+        net.eval()
+        image = cv2.imread(image_file)
+        image_height, image_width, _ = image.shape
+        detections, _ = detector.detect(image, my_thresh, 1)
+        for i in range(len(detections)):
+            det_xmin = detections[i][2]
+            det_ymin = detections[i][3]
+            det_width = detections[i][4]
+            det_height = detections[i][5]
+            det_xmax = det_xmin + det_width - 1
+            det_ymax = det_ymin + det_height - 1
 
-    net.eval()
-    image = cv2.imread(image_file)
-    image_height, image_width, _ = image.shape
-    detections, _ = detector.detect(image, my_thresh, 1)
-    for i in range(len(detections)):
-        det_xmin = detections[i][2]
-        det_ymin = detections[i][3]
-        det_width = detections[i][4]
-        det_height = detections[i][5]
-        det_xmax = det_xmin + det_width - 1
-        det_ymax = det_ymin + det_height - 1
+            det_xmin -= int(det_width * (det_box_scale-1)/2)
+            # remove a part of top area for alignment, see paper for details
+            det_ymin += int(det_height * (det_box_scale-1)/2)
+            det_xmax += int(det_width * (det_box_scale-1)/2)
+            det_ymax += int(det_height * (det_box_scale-1)/2)
+            det_xmin = max(det_xmin, 0)
+            det_ymin = max(det_ymin, 0)
+            det_xmax = min(det_xmax, image_width-1)
+            det_ymax = min(det_ymax, image_height-1)
+            det_width = det_xmax - det_xmin + 1
+            det_height = det_ymax - det_ymin + 1
+            cv2.rectangle(image, (det_xmin, det_ymin), (det_xmax, det_ymax), (0, 0, 255), 2)
+            det_crop = image[det_ymin:det_ymax, det_xmin:det_xmax, :]
+            det_crop = cv2.resize(det_crop, (input_size, input_size))
+            inputs = Image.fromarray(det_crop[:,:,::-1].astype('uint8'), 'RGB')
+            inputs = preprocess(inputs).unsqueeze(0)
+            inputs = inputs.to(device)
+            lms_pred_x, lms_pred_y, lms_pred_nb_x, lms_pred_nb_y, outputs_cls, max_cls = forward_pip(net, inputs, preprocess, input_size, net_stride, num_nb)
+            lms_pred = torch.cat((lms_pred_x, lms_pred_y), dim=1).flatten()
+            tmp_nb_x = lms_pred_nb_x[reverse_index1, reverse_index2].view(cfg.num_lms, max_len)
+            tmp_nb_y = lms_pred_nb_y[reverse_index1, reverse_index2].view(cfg.num_lms, max_len)
+            tmp_x = torch.mean(torch.cat((lms_pred_x, tmp_nb_x), dim=1), dim=1).view(-1,1)
+            tmp_y = torch.mean(torch.cat((lms_pred_y, tmp_nb_y), dim=1), dim=1).view(-1,1)
+            lms_pred_merge = torch.cat((tmp_x, tmp_y), dim=1).flatten()
+            lms_pred = lms_pred.cpu().numpy()
+            lms_pred_merge = lms_pred_merge.cpu().numpy()
+            for j in range(cfg.num_lms):
+                x_pred = lms_pred_merge[j*2] * det_width
+                y_pred = lms_pred_merge[j*2+1] * det_height
+                cv2.circle(image, (int(x_pred)+det_xmin, int(y_pred)+det_ymin), 1, (0, 0, 255), 2)
+            # append to new image list
+            if i == len(detections)-1:
+                print('Appended image: %s' % (image_file))
+                images_out.append(image)
+    
+    
+    images_out_count = len(images_out)
+    # check if image_count is prime number
+    if all(images_out_count % i for i in range(2, images_out_count)):
+        nearest_diff = images_out_count + 1
+        images_out_count += 1
+    else:
+        nearest_diff = images_out_count                
+    
+    # find nearest two factors of image_count to use in Simple ImageGrid
+    for i in range(2, images_out_count):
+        if images_out_count % i == 0:
+            diff = abs(i - images_out_count // i)
+            if diff < nearest_diff:
+                nearest_diff = diff
+                plot_h = i
+                plot_w = images_out_count // i
+    
+    # equalize image sizes
+    images_out = [cv2.resize(im, (images_out[0].shape[1], images_out[0].shape[0])) for im in images_out]
+    # colorize images
+    images_out = [cv2.cvtColor(im, cv2.COLOR_BGR2RGB) for im in images_out]
+    
+    # use images out to create Simple ImageGrid
+    fig = plt.figure(figsize=(images_out_count * 2, images_out_count * 2))
+    grid = ImageGrid(fig, 111,
+                        nrows_ncols=(plot_h, plot_w),
+                        axes_pad=0.1,
+                    )
+    for ax, im in zip(grid, images_out):
+        ax.imshow(im)
+    # save image grid snapshots + data_name + experiment_name
+    plt.savefig('snapshots/' + data_name + '/' + experiment_name + '/' + 'demo_image_grid.png')
 
-        det_xmin -= int(det_width * (det_box_scale-1)/2)
-        # remove a part of top area for alignment, see paper for details
-        det_ymin += int(det_height * (det_box_scale-1)/2)
-        det_xmax += int(det_width * (det_box_scale-1)/2)
-        det_ymax += int(det_height * (det_box_scale-1)/2)
-        det_xmin = max(det_xmin, 0)
-        det_ymin = max(det_ymin, 0)
-        det_xmax = min(det_xmax, image_width-1)
-        det_ymax = min(det_ymax, image_height-1)
-        det_width = det_xmax - det_xmin + 1
-        det_height = det_ymax - det_ymin + 1
-        cv2.rectangle(image, (det_xmin, det_ymin), (det_xmax, det_ymax), (0, 0, 255), 2)
-        det_crop = image[det_ymin:det_ymax, det_xmin:det_xmax, :]
-        det_crop = cv2.resize(det_crop, (input_size, input_size))
-        inputs = Image.fromarray(det_crop[:,:,::-1].astype('uint8'), 'RGB')
-        inputs = preprocess(inputs).unsqueeze(0)
-        inputs = inputs.to(device)
-        lms_pred_x, lms_pred_y, lms_pred_nb_x, lms_pred_nb_y, outputs_cls, max_cls = forward_pip(net, inputs, preprocess, input_size, net_stride, num_nb)
-        lms_pred = torch.cat((lms_pred_x, lms_pred_y), dim=1).flatten()
-        tmp_nb_x = lms_pred_nb_x[reverse_index1, reverse_index2].view(cfg.num_lms, max_len)
-        tmp_nb_y = lms_pred_nb_y[reverse_index1, reverse_index2].view(cfg.num_lms, max_len)
-        tmp_x = torch.mean(torch.cat((lms_pred_x, tmp_nb_x), dim=1), dim=1).view(-1,1)
-        tmp_y = torch.mean(torch.cat((lms_pred_y, tmp_nb_y), dim=1), dim=1).view(-1,1)
-        lms_pred_merge = torch.cat((tmp_x, tmp_y), dim=1).flatten()
-        lms_pred = lms_pred.cpu().numpy()
-        lms_pred_merge = lms_pred_merge.cpu().numpy()
-        for i in range(cfg.num_lms):
-            x_pred = lms_pred_merge[i*2] * det_width
-            y_pred = lms_pred_merge[i*2+1] * det_height
-            cv2.circle(image, (int(x_pred)+det_xmin, int(y_pred)+det_ymin), 1, (0, 0, 255), 2)
-    #cv2.imwrite('images/1_out.jpg', image)
-    cv2.imshow('1', image)
-    cv2.waitKey(0)
         
-
-demo_image(image_file, net, preprocess, cfg.input_size, cfg.net_stride, cfg.num_nb, cfg.use_gpu, device)
+demo_image(image_folder, net, preprocess, cfg.input_size, cfg.net_stride, cfg.num_nb, cfg.use_gpu, device)
